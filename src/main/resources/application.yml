@@ -1,0 +1,60 @@
+spring:
+  application.name: job-ingest-service
+  config.import: optional:file:.env[.properties]
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/jobradar_ingest}
+    username: ${DB_USER:jobradar}
+    password: ${DB_PASSWORD:jobradar}
+    hikari.maximum-pool-size: 5
+  jpa:
+    hibernate.ddl-auto: validate
+    open-in-view: false
+  mvc.problemdetails.enabled: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      properties:
+        max.block.ms: 5000
+server.port: 8081
+management.health.mail.enabled: false
+
+resilience4j.retry.instances.sources:
+  max-attempts: 3
+  wait-duration: 2s
+  enable-exponential-backoff: true
+  exponential-backoff-multiplier: 2
+
+app:
+  jwt.secret: ${JWT_SECRET}
+  cors.allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:3001,http://localhost:3002}
+  kafka.enabled: ${KAFKA_ENABLED:true}
+  ingest:
+    poll-interval: ${INGEST_POLL_INTERVAL:PT30M}
+    initial-delay: ${INGEST_INITIAL_DELAY:PT1M}
+    # only titles matching this are kept (keeps volume and RAM low)
+    title-include: "(?i)(engineer|developer|frontend|front-end|backend|back-end|full[ -]?stack|software|sde|react|java)"
+    # keep jobs in these places (plus remote jobs open worldwide / APAC); empty = keep everything
+    location-include: ${INGEST_LOCATION_INCLUDE:india|bengaluru|bangalore|hyderabad|pune|mumbai|chennai|gurgaon|gurugram|noida|delhi|kolkata|ahmedabad|kochi|jaipur|coimbatore|chandigarh|indore|trivandrum|thiruvananthapuram}
+    # boards verified to have India openings (Indian companies + India offices of global ones)
+    greenhouse-boards: ${GREENHOUSE_BOARDS:razorpaysoftwareprivatelimited,groww,druva,hackerrank,rubrik,databricks,okta,mongodb,zscaler,stripe,gitlab,coinbase,elastic,twilio}
+    lever-companies: ${LEVER_COMPANIES:meesho,paytm,cred,mindtickle}
+    ashby-boards: ${ASHBY_BOARDS:atlan,notion}
+    remotive-enabled: ${REMOTIVE_ENABLED:true}
+    adzuna:
+      app-id: ${ADZUNA_APP_ID:}
+      app-key: ${ADZUNA_APP_KEY:}
+      country: ${ADZUNA_COUNTRY:in}
+      what: ${ADZUNA_WHAT:java react developer}
+    # rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch (free ~200 req/month):
+    # 2 queries x 2 runs/day x 30 days = 120 requests
+    jsearch:
+      api-key: ${JSEARCH_API_KEY:}
+      queries: ${JSEARCH_QUERIES:java developer in India,full stack developer in India}
+      country: ${JSEARCH_COUNTRY:in}
+      date-posted: ${JSEARCH_DATE_POSTED:3days}
+      min-interval: ${JSEARCH_MIN_INTERVAL:PT12H}
+    email:
+      host: ${IMAP_HOST:imap.gmail.com}
+      username: ${IMAP_USERNAME:}
+      password: ${IMAP_PASSWORD:}
+      folder: ${IMAP_FOLDER:INBOX}
